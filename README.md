@@ -94,11 +94,18 @@ unattended operation for a single Mandant matters more than multi-client discove
 4. Set the **client type to Confidential** (this server holds a client secret in a
    backend and needs long-lived tokens — DATEV's Backend-for-Frontend case) and the
    flow to **OpenID Connect Authorization Code Flow**, not the deprecated Hybrid Flow.
-5. Register your **redirect URI**: `https://<your-domain>/api/datev/callback`. In
-   **production**, Confidential apps may only use HTTPS URLs — no `localhost`, no raw
-   IP addresses, no custom schemes ([requirements](https://developer.datev.de/de/guides/authentication#anforderungen-an-redirecturls-in-der-produktivumgebung)).
-   The sandbox stage still allows `localhost` and IPs for testing, but every
-   disallowed URL must be removed before the production upgrade.
+5. Register your **redirect URI** — the portal validates it strictly
+   ([requirements](https://developer.datev.de/de/guides/authentication#anforderungen-an-redirecturls-in-der-produktivumgebung)):
+   - **"DATEV" may not appear in the domain, only in the path.** `https://datev-mcp.example.com/…`
+     is rejected; `https://mcp.example.com/api/datev/callback` is fine. This server's
+     `/api/datev/` path is deliberately chosen to stay on the legal side of that line —
+     just keep the word out of your hostname.
+   - HTTPS URLs allow **no wildcards**; register each full URL exactly, path included.
+   - For http, only literally `http://localhost` may be registered. It then acts as a
+     placeholder for any port and path, so you register `http://localhost` but may use
+     `http://localhost:3000/api/datev/callback` at runtime.
+   - `localhost`, custom schemes and other local/internal/development-like URIs are
+     **sandbox only**. Production requires a uniquely resolvable, production-usable domain.
 6. Copy the **scope strings verbatim** from the portal into `DATEV_SCOPES` — DATEV's
    scope naming is inconsistent across public docs (`accounting:documents` vs
    `datev:accounting:documents`), and only the portal shows the strings your app actually has.
