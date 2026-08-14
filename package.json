@@ -1,0 +1,24 @@
+{
+  "name": "datev-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "DATEV MCP server for nuwacom agents — Vercel (Next.js + mcp-handler) edition with OAuth 2.0 Authorization Code + PKCE and Upstash Redis token persistence.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@upstash/redis": "^1.34.0",
+    "mcp-handler": "^1.0.1",
+    "next": "^15.0.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/react": "^18.3.3",
+    "typescript": "^5.5.0"
+  }
+}
