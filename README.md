@@ -51,6 +51,36 @@ Tools accept human client **names** and resolve them to Mandant ids automaticall
 (exact match first, then unique substring). Document *reading/listing* is deliberately
 not included: the `accounting:documents` v2 API (Belegbilderservice) is upload-only.
 
+## Token lifetime: two modes
+
+DATEV access tokens always last 15 minutes and are refreshed automatically. How long
+the *refresh* token lasts — i.e. how often a human has to reconnect — depends on the
+scopes you request, and the trade-off is worth understanding before you choose.
+
+| | **A — Session mode** (default) | **B — Offline mode** (`offline_access`) |
+| --- | --- | --- |
+| Refresh token lifetime | max 11 hours | 2 years, renewed on every refresh |
+| Human reconnect | ~once per working day | effectively never |
+| Mandanten reachable | all the connection can see | **exactly one**, fixed at login |
+| `list_clients` | works | **does not work** |
+| Extra scope needed | — | `offline_access` + `datev:iam:client:<consultant>-<client>` |
+
+Mode B sounds strictly better but carries a real restriction: the token is bound to a
+single Mandant and only works on endpoints that carry the client id in the URL path.
+`GET /clients` has no client id in its path, so `list_clients` returns an error — you
+pin the Mandant via `DATEV_DEFAULT_CLIENT_ID` instead. DATEV also requires that you
+verify the Mandant is reachable before requesting the offline token, implement token
+revocation, and prominently link users to
+[apps.datev.de/tokrevui](https://apps.datev.de/tokrevui) so they can disconnect.
+
+Start with mode A while you are getting the integration working; move to mode B if
+unattended operation for a single Mandant matters more than multi-client discovery.
+
+> **Refresh tokens are single-use.** Every refresh invalidates the previous refresh
+> *and* access token. Replaying one invalidates the whole session and forces a fresh
+> login — which is why [lib/datevAuth.ts](lib/datevAuth.ts) serialises refreshes behind
+> a Redis lock rather than letting concurrent invocations race.
+
 ---
 
 ## 1. Create an app in the DATEV Developer Portal
@@ -61,19 +91,19 @@ not included: the `accounting:documents` v2 API (Belegbilderservice) is upload-o
    **accounting:documents** (Belegbilderservice) and **accounting:clients** — and accept
    the DATEV interface agreement. DATEV reviews the subscription request.
 3. Create an app (**App erstellen**). Copy the **client id** and **client secret**.
-4. Register your **redirect URI** on the app: `https://<your-domain>/api/datev/callback`.
-   It must be a public HTTPS URL on a domain you control. DATEV's
-   [redirect-URL guidelines](https://developer.datev.de/en/guides/new-guidelines-redirect-urls)
-   forbid `localhost`, custom schemes and raw IP addresses for **Confidential**
-   apps — the client type this server uses — and since 1 March 2026 apps still
-   registering one are blocked from the API gateway. Local development therefore
-   needs a tunnel with a stable hostname, not `http://localhost:3000`.
-5. Copy the **scope strings verbatim** from the portal into `DATEV_SCOPES` — DATEV's
+4. Set the **client type to Confidential** (this server holds a client secret in a
+   backend and needs long-lived tokens — DATEV's Backend-for-Frontend case) and the
+   flow to **OpenID Connect Authorization Code Flow**, not the deprecated Hybrid Flow.
+5. Register your **redirect URI**: `https://<your-domain>/api/datev/callback`. In
+   **production**, Confidential apps may only use HTTPS URLs — no `localhost`, no raw
+   IP addresses, no custom schemes ([requirements](https://developer.datev.de/de/guides/authentication#anforderungen-an-redirecturls-in-der-produktivumgebung)).
+   The sandbox stage still allows `localhost` and IPs for testing, but every
+   disallowed URL must be removed before the production upgrade.
+6. Copy the **scope strings verbatim** from the portal into `DATEV_SCOPES` — DATEV's
    scope naming is inconsistent across public docs (`accounting:documents` vs
    `datev:accounting:documents`), and only the portal shows the strings your app actually has.
-   Include **`offline_access`** (and the paired `datev:iam:client:*`): DATEV issues the
-   refresh token this server depends on only when you request them. Without them the
-   connection expires after ~15 minutes rather than ~11 hours.
+   Then decide between the two token modes described under
+   [Token lifetime: two modes](#token-lifetime-two-modes) below.
 6. New subscriptions start **sandbox-only** (with demo Mandanten like `455148-1`). Production
    access is requested from the app's detail page and reviewed by DATEV
    (Beratung Ökosystem) against their interface requirements — plan for weeks, not days.
