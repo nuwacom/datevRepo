@@ -61,11 +61,19 @@ not included: the `accounting:documents` v2 API (Belegbilderservice) is upload-o
    **accounting:documents** (Belegbilderservice) and **accounting:clients** — and accept
    the DATEV interface agreement. DATEV reviews the subscription request.
 3. Create an app (**App erstellen**). Copy the **client id** and **client secret**.
-4. Register your **redirect URI** on the app: `https://<your-app>.vercel.app/api/datev/callback`
-   (add `http://localhost:3000/api/datev/callback` too if you want local development).
+4. Register your **redirect URI** on the app: `https://<your-domain>/api/datev/callback`.
+   It must be a public HTTPS URL on a domain you control. DATEV's
+   [redirect-URL guidelines](https://developer.datev.de/en/guides/new-guidelines-redirect-urls)
+   forbid `localhost`, custom schemes and raw IP addresses for **Confidential**
+   apps — the client type this server uses — and since 1 March 2026 apps still
+   registering one are blocked from the API gateway. Local development therefore
+   needs a tunnel with a stable hostname, not `http://localhost:3000`.
 5. Copy the **scope strings verbatim** from the portal into `DATEV_SCOPES` — DATEV's
    scope naming is inconsistent across public docs (`accounting:documents` vs
    `datev:accounting:documents`), and only the portal shows the strings your app actually has.
+   Include **`offline_access`** (and the paired `datev:iam:client:*`): DATEV issues the
+   refresh token this server depends on only when you request them. Without them the
+   connection expires after ~15 minutes rather than ~11 hours.
 6. New subscriptions start **sandbox-only** (with demo Mandanten like `455148-1`). Production
    access is requested from the app's detail page and reviewed by DATEV
    (Beratung Ökosystem) against their interface requirements — plan for weeks, not days.
