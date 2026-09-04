@@ -15,7 +15,7 @@ permissions:
   contents: read
 
 env:
-  IMAGE_NAME: datev-mcp
+  IMAGE_NAME: mcp/datev-mcp # namespaced in the shared nuwacom ACR alongside the app's other images
   CONTAINER_APP_NAME: ca-datev-mcp
 
 jobs:
