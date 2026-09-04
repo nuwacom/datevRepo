@@ -1,0 +1,23 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      REDIS_URL: redis://redis:6379
+    env_file:
+      - .env.local
+    depends_on:
+      - redis
+
+  # ponytail: mirrors the Azure Container Apps sidecar — same image, same
+  # persistence story (RDB snapshot on a mounted volume). Swap for Azure Cache
+  # for Redis by pointing REDIS_URL elsewhere if multi-replica scaling is ever needed.
+  redis:
+    image: redis:7-alpine
+    command: redis-server --save 60 1 --appendonly yes
+    volumes:
+      - redis-data:/data
+
+volumes:
+  redis-data:

@@ -9,7 +9,7 @@
     "start": "next start"
   },
   "dependencies": {
-    "@upstash/redis": "^1.34.0",
+    "ioredis": "^5.4.1",
     "mcp-handler": "^1.0.1",
     "next": "^15.0.3",
     "react": "^18.3.1",

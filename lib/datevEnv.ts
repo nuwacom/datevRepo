@@ -157,8 +157,7 @@ export function checkConfig(): { ok: boolean; error?: string } {
   try {
     datevEnvName();
     oauthConfig();
-    required("UPSTASH_REDIS_REST_URL");
-    required("UPSTASH_REDIS_REST_TOKEN");
+    required("REDIS_URL");
     return { ok: true };
   } catch (err: any) {
     return { ok: false, error: err?.message ?? String(err) };
